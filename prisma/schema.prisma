@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  userId   Int      @id @default(autoincrement())
+  id       String
+  password String
+  userType String
+  point    Int
+  createAt DateTime @default(now())
+  deleteAt DateTime @db.Timestamp()
+
+  // Orders 관계
+  orders Orders[]
+
+  // Restaurants 관계
+  restaurants Restaurants[]
+
+  @@map("Users")
+}
+
+model Restaurants {
+  restaurantId Int      @id @default(autoincrement())
+  brandName    String
+  address      String
+  tel          String
+  type         String
+  createAt     DateTime @default(now())
+  deleteAt     DateTime @db.Timestamp()
+
+  // Users 관계
+  UserId Int
+  Users  Users @relation(fields: [UserId], references: [userId],onDelete: Cascade)
+
+  // Orders 관계
+  orders Orders[]
+
+  // Menus 관계
+  menus Menus[]
+
+  @@map("Restaurants")
+}
+
+model Orders {
+  orderId    Int      @id @default(autoincrement())
+  totalPrice Int
+  status     String
+  createAt   DateTime @default(now())
+  deleteAt   DateTime @db.Timestamp()
+
+  // Users 관계
+  UserId Int
+  users  Users @relation(fields: [UserId], references: [userId])
+
+  // Restaurants 관계
+  restaurantId Int
+  restaurants  Restaurants @relation(fields: [restaurantId], references: [restaurantId])
+
+  // Menus 관계
+  menus Menus[]
+
+  @@map("Orders")
+}
+
+model Menus {
+  menuId   Int      @id @default(autoincrement())
+  menuName String
+  image    String
+  price    Int
+  createAt DateTime @default(now())
+  deleteAt DateTime @db.Timestamp()
+
+  // Orders 관계
+  OrderId Int
+  orders  Orders @relation(fields: [OrderId], references: [orderId])
+
+  // Restaurants 관계 
+  restaurantId Int
+  restaurants  Restaurants @relation(fields: [restaurantId], references: [restaurantId],onDelete: Cascade)
+
+  @@map("Menus")
+}

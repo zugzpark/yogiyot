@@ -1,0 +1,10 @@
+node_modules
+.prettierrc.json
+/spa-shop
+
+
+.env
+
+#IDE
+.vscode/*
+/.vscode

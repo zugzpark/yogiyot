@@ -29,4 +29,14 @@ export class yogiyotController {
          next(error);
       }
    };
+
+   // createRestaurant = async (req, res, next) => {
+   //    try {
+   //       const { name, address, tel, type } = req.body;
+   //       const restaurant = await this.service.createRestaurant({ brandName: name }, address, tel, type);
+   //       return res.statsu(200).json({ data: restaurant });
+   //    } catch (error) {
+   //       next(error);
+   //    }
+   // };
 }

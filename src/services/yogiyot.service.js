@@ -27,4 +27,16 @@ export class yogiyotService {
       const restaurants = await this.repository.findAllRestaurants();
       return restaurants;
    };
+
+   // createRestaurant = async (name, address, tel, type) => {
+   //    const restaurant = await this.repository.createRestaurant({ brandName: name }, address, tel, type);
+   //    return {
+   //       restaurantId: restaurant.restaurantId,
+   //       name: restaurant.brandName,
+   //       address: restaurant.address,
+   //       tel: restaurant.tel,
+   //       type: restaurant.type,
+   //       createdAt: restaurant.createdAt,
+   //    };
+   // };
 }

@@ -62,9 +62,6 @@ model Orders {
   restaurantId Int
   restaurants  Restaurants @relation(fields: [restaurantId], references: [restaurantId])
 
-  // Menus 관계
-  menus Menus[]
-
   @@map("Orders")
 }
 
@@ -73,12 +70,9 @@ model Menus {
   menuName String
   image    String
   price    Int
+  type     String
   createAt DateTime @default(now())
   deleteAt DateTime @db.Timestamp()
-
-  // Orders 관계
-  OrderId Int
-  orders  Orders @relation(fields: [OrderId], references: [orderId])
 
   // Restaurants 관계 
   restaurantId Int

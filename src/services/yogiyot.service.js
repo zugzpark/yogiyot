@@ -8,35 +8,63 @@ export class yogiyotService {
     * service.js 참고
     */
 
-   // export function getSuggestions(input) {
-   //    // 1. 사용자의 입력을 검증하고 변환
-   //    const validatedInput = validateAndTransformInput(input);
-
-   //    // 2. Elasticsearch에 쿼리를 보내고 결과를 받음
-   //    return elasticsearchRepository.getSuggestions(validatedInput)
-   //       .then((result) => {
-   //          // 3. 검색 결과를 후처리
-   //          return postprocessResults(result);
-   //       });
+   //검색
    getSuggestions = async (input) => {
       const search = await this.repository.getSuggestions(input);
       return search;
    };
 
-   findAllRestaurants = async () => {
-      const restaurants = await this.repository.findAllRestaurants();
+   findAllRestaurantsWithoutDel = async () => {
+      const restaurants = await this.repository.findAllRestaurantsWithoutDel();
       return restaurants;
    };
 
-   // createRestaurant = async (name, address, tel, type) => {
-   //    const restaurant = await this.repository.createRestaurant({ brandName: name }, address, tel, type);
-   //    return {
-   //       restaurantId: restaurant.restaurantId,
-   //       name: restaurant.brandName,
-   //       address: restaurant.address,
-   //       tel: restaurant.tel,
-   //       type: restaurant.type,
-   //       createdAt: restaurant.createdAt,
-   //    };
-   // };
+   // 사업장등록
+   createRestaurant = async (brandName, address, tel, type, userId, userType) => {
+      if (userType !== 'owner') {
+         return res.status(401).json({ errorMessage: '사장님만 사용할 수 있는 api입니다' });
+      }
+      const restaurant = await this.repository.createRestaurant(brandName, address, tel, type, userId);
+      return {
+         restaurantId: restaurant.restaurantId,
+         brandName: restaurant.brandName,
+         address: restaurant.address,
+         tel: restaurant.tel,
+         type: restaurant.type,
+         createdAt: restaurant.createdAt,
+      };
+   };
+
+   // 사업장수정
+   updateRestaurant = async (brandName, address, tel, type, userType, restaurantId) => {
+      if (userType !== 'owner') {
+         return res.status(401).json({ errorMessage: '사장님만 사용할 수 있는 api입니다' });
+      }
+      const restaurant = await this.repository.findByRestaurantId(restaurantId);
+      if (!restaurant || restaurant.deletedAt !== null) {
+         return res.status(404).json({ errorMessage: '존재하지 않는 사업장 입니다' });
+      }
+
+      await this.repository.updateRestaurant(brandName, address, tel, type, restaurantId);
+
+      //변경된 데이터 response
+      const updatedRestaurant = await this.repository.findByRestaurantId(restaurantId);
+
+      return updatedRestaurant;
+   };
+
+   // 사업장삭제
+   deleteRestaurant = async (restaurantId, userType) => {
+      if (userType !== 'owner') {
+         return res.status(401).json({ errorMessage: '사장님만 사용할 수 있는 api입니다' });
+      }
+      const restaurant = await this.repository.findByRestaurantId(restaurantId);
+      if (!restaurant || restaurant.deletedAt !== null) {
+         return res.status(404).json({ errorMessage: '존재하지 않는 사업장 입니다' });
+      }
+      await this.repository.softDeleteRestaurant(restaurantId);
+
+      //삭제될 정보 전달
+      return restaurant;
+   };
 }

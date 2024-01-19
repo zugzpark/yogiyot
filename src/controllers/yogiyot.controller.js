@@ -5,6 +5,7 @@ import { yogiyotService } from '../services/yogiyot.service.js';
 export class yogiyotController {
    service = new yogiyotService();
 
+   //검색
    getSuggestions = async (req, res, next) => {
       try {
          const results = await this.service.getSuggestions(req.params.input);
@@ -23,8 +24,49 @@ export class yogiyotController {
 
    getRestaurants = async (req, res, next) => {
       try {
-         const restaurants = await this.service.findAllRestaurants();
+         const restaurants = await this.service.findAllRestaurantsWithoutDel();
          return res.status(200).json({ data: restaurants });
+      } catch (error) {
+         next(error);
+      }
+   };
+
+   //사업장 등록
+   createRestaurant = async (req, res, next) => {
+      try {
+         // const {userId} = req.user
+         const userId = 1; //임시데이터
+         const userType = 'owner'; //임시데이터
+         const { brandName, address, tel, type } = req.body;
+         const restaurant = await this.service.createRestaurant(brandName, address, tel, type, userId, userType);
+         return res.status(200).json({ data: restaurant });
+      } catch (error) {
+         next(error);
+      }
+   };
+
+   //사업장 수정
+   updateRestaurant = async (req, res, next) => {
+      try {
+         // const { userType } = req.user;
+         const userType = 'owner'; //임시데이터
+         const { restaurantId } = req.params;
+         const { brandName, address, tel, type } = req.body;
+         const restaurant = await this.service.updateRestaurant(brandName, address, tel, type, userType, restaurantId);
+         return res.status(200).json({ data: restaurant });
+      } catch (error) {
+         next(error);
+      }
+   };
+
+   //사업장 삭제
+   deleteRestaurant = async (req, res, next) => {
+      try {
+         // const { userType } = req.user;
+         const userType = 'owner'; //임시데이터
+         const { restaurantId } = req.params;
+         const deletedRestaurant = await this.service.deleteRestaurant(restaurantId, userType);
+         return res.status(200).json({ data: deletedRestaurant });
       } catch (error) {
          next(error);
       }

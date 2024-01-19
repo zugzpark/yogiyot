@@ -1,3 +1,12 @@
 node_modules
+.prettierrc.json
+
+
+
+.env
+
+#IDE
+.vscode/*
+/.vscodenode_modules
 # Keep environment variables out of version control
 .env

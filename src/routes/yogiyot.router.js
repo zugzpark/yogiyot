@@ -5,6 +5,7 @@ const router = express.Router();
 
 const controller = new yogiyotController();
 
+//사업장조회(브랜드 목록)
 router.get('/', controller.getRestaurants);
 
 //input 요청받은 검색어

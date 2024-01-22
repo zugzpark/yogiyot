@@ -22,6 +22,7 @@ export class yogiyotController {
     * Controller.js 참고
     */
 
+   //사업장 조회
    getRestaurants = async (req, res, next) => {
       try {
          const restaurants = await this.service.findAllRestaurantsWithoutDel();

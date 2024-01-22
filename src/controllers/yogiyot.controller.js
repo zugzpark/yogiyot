@@ -7,6 +7,7 @@ import usersValidator from "../utils/validation/usersValidator.js";
 import { imageUploader, uploadWebImage } from "../utils/aws/imageUploader.js";
 import server from 'http'
 import { Server } from "socket.io";
+
 const io = new Server(server);
 
 
@@ -24,12 +25,7 @@ export class yogiyotController {
       }
    };
 
-   /**
-    *
-    * https://teamsparta.notion.site/5-6-Layered-Architecture-Pattern-Repository-1950d4b356d64f20b2c03b1f898f944c
-    * Controller.js 참고
-    */
-
+   
    getRestaurants = async (req, res, next) => {
       try {
          const restaurants = await this.service.findAllRestaurantsWithoutDel();

@@ -4,6 +4,7 @@ import { yogiyotRepository } from './repositories/yogiyot.repository.js';
 import ErrorHandler from "./middlewares/errorHandlerMiddleware.js";
 import cookieParser from 'cookie-parser'
 import path from 'path'
+
 const elasticsearch = new yogiyotRepository();
 
 const app = express();

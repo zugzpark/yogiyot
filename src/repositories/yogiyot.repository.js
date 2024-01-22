@@ -199,18 +199,6 @@ export class yogiyotRepository {
       return restaurants;
    };
 
-   //모든 사업장 찾기
-   findAllRestaurants = async () => {
-      const restaurants = await prisma.$queryRaw`
-    select restaurantId as id,
-    brandName as name,
-    type
-    from Restaurants
-    `;
-
-      return restaurants;
-   };
-
    //delete된 사업장 제외하고 찾기
    findAllRestaurantsWithoutDel = async () => {
       const restaurant = await prisma.restaurants.findMany({

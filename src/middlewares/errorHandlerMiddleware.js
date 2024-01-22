@@ -2,7 +2,8 @@ import CustomError from '../utils/error/CustomError.js';
 
 const errorHandler = (err, req, res, next) => {
     console.log(`미들웨어 error 처리`)
-  if (err instanceof CustomError) {
+    console.log(err.name, err.message)
+  if (err instanceof CustomError) { 
     return res.status(err.statusCode).json({ message: err.message });
   }
   

@@ -6,4 +6,4 @@ class CustomError extends Error {
   }
 }
 
-export default CustomError ;
+export default CustomError;

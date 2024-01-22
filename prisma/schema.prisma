@@ -13,8 +13,8 @@ model Users {
   password String
   userType String
   point    Int
-  createAt DateTime @default(now())
-  deleteAt DateTime @db.Timestamp()
+  createdAt DateTime @default(now())
+  deletedAt DateTime?  @db.Timestamp()
 
   // Orders 관계
   orders Orders[]
@@ -31,8 +31,8 @@ model Restaurants {
   address      String
   tel          String
   type         String
-  createAt     DateTime @default(now())
-  deleteAt     DateTime @db.Timestamp()
+  createdAt     DateTime @default(now())
+  deletedAt     DateTime? @db.Timestamp()
 
   // Users 관계
   UserId Int
@@ -49,10 +49,15 @@ model Restaurants {
 
 model Orders {
   orderId    Int      @id @default(autoincrement())
+  customerId String
   totalPrice Int
   status     String
-  createAt   DateTime @default(now())
-  deleteAt   DateTime @db.Timestamp()
+  createdAt   DateTime @default(now())
+  deletedAt   DateTime?  @db.Timestamp()
+
+  // Menus 관계
+  MenuId Int
+  menus  Menus @relation(fields: [MenuId], references: [menuId])
 
   // Users 관계
   UserId Int
@@ -71,12 +76,15 @@ model Menus {
   image    String
   price    Int
   type     String
-  createAt DateTime @default(now())
-  deleteAt DateTime @db.Timestamp()
+  createdAt DateTime @default(now())
+  deletedAt DateTime?  @db.Timestamp()
 
   // Restaurants 관계 
   restaurantId Int
   restaurants  Restaurants @relation(fields: [restaurantId], references: [restaurantId],onDelete: Cascade)
+
+  // Orders 관계
+  orders Orders[]
 
   @@map("Menus")
 }

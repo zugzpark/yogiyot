@@ -1,4 +1,5 @@
 import { yogiyotService } from '../services/yogiyot.service.js';
+import { sesMailer } from '../../config/emailAuth.js';
 
 // const client = new elasticsearch.Client({ hosts: ['http://localhost:9200'] });
 import CustomError from "../utils/error/CustomError.js";
@@ -71,6 +72,39 @@ export class yogiyotController {
          const { restaurantId } = req.params;
          const deletedRestaurant = await this.service.deleteRestaurant(restaurantId, userType);
          return res.status(200).json({ data: deletedRestaurant });
+      } catch (error) {
+         next(error);
+      }
+   };
+
+   emailAuthentication = async (req, res, next) => {
+      try {
+         const randomNumber = Math.floor(Math.random() * (999999 - 111111 + 1)) + 111111;
+         const { email } = req.body;
+
+         console.log('emailemailemailemail', email);
+
+         const mailOptions = {
+            from: `jenna <${process.env.EMAIL}>`, // AWS SES에서 검증된 발신자 이메일 주소.
+            to: email,
+            subject: '인증 관련 메일입니다.',
+            html: '<h1>인증번호를 입력해주세요</h1>' + randomNumber,
+         };
+
+         sesMailer.sendMail(mailOptions, (error, responses) => {
+            if (error) {
+               console.error(error);
+               res.status(500).json({
+                  message: `Failed to send authentication email to ${email}`,
+               });
+            } else {
+               res.status(200).json({
+                  randomNumber,
+                  message: `Authentication mail is sent to ${email}`,
+               });
+            }
+            sesMailer.close();
+         });
       } catch (error) {
          next(error);
       }
@@ -226,3 +260,5 @@ export class yogiyotController {
     }
   };
 }
+
+//메일에 경고문구가 뜨는데 아마 도메인 설정을 안해서 그런거 같다

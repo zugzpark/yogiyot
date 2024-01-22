@@ -23,8 +23,12 @@ router.put('/restaurants/:restaurantId', controller.updateRestaurant);
 // //사업장 정보 삭제
 router.delete('/restaurants/:restaurantId', controller.deleteRestaurant);
 
+//이메일인증
+router.post('/emailcheck', controller.emailAuthentication);
+
 router.post("/login", controller.login)
 router.post("/signUp",controller.signUp)
 router.post("/restaurants/:restaurantId/menus" ,upload.single('image'), controller.createMenu)
 router.post("/restaurants/:restaurantId/menus/:menuId/orders",authMiddleware, controller.createOrder)
+
 export default router;

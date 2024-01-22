@@ -13,8 +13,8 @@ model Users {
   password String
   userType String
   point    Int
-  createAt DateTime @default(now())
-  deleteAt DateTime @db.Timestamp()
+  createdAt DateTime @default(now())
+  deletedAt DateTime? @db.Timestamp()
 
   // Orders 관계
   orders Orders[]
@@ -31,8 +31,8 @@ model Restaurants {
   address      String
   tel          String
   type         String
-  createAt     DateTime @default(now())
-  deleteAt     DateTime @db.Timestamp()
+  createdAt     DateTime @default(now())
+  deletedAt     DateTime? @db.Timestamp()
 
   // Users 관계
   UserId Int
@@ -44,15 +44,24 @@ model Restaurants {
   // Menus 관계
   menus Menus[]
 
+  
+  // 검색을 위한 인덱스 생성
+  @@index([brandName], name: "brand_name")
+
   @@map("Restaurants")
 }
 
 model Orders {
   orderId    Int      @id @default(autoincrement())
+  customerId String
   totalPrice Int
   status     String
-  createAt   DateTime @default(now())
-  deleteAt   DateTime @db.Timestamp()
+  createdAt   DateTime @default(now())
+  deletedAt   DateTime?  @db.Timestamp()
+
+  // Menus 관계
+  MenuId Int
+  menus  Menus @relation(fields: [MenuId], references: [menuId])
 
   // Users 관계
   UserId Int
@@ -62,9 +71,6 @@ model Orders {
   restaurantId Int
   restaurants  Restaurants @relation(fields: [restaurantId], references: [restaurantId])
 
-  // Menus 관계
-  menus Menus[]
-
   @@map("Orders")
 }
 
@@ -73,16 +79,20 @@ model Menus {
   menuName String
   image    String
   price    Int
-  createAt DateTime @default(now())
-  deleteAt DateTime @db.Timestamp()
-
-  // Orders 관계
-  OrderId Int
-  orders  Orders @relation(fields: [OrderId], references: [orderId])
+  type     String
+  createdAt DateTime @default(now())
+  deletedAt DateTime?  @db.Timestamp()
 
   // Restaurants 관계 
   restaurantId Int
   restaurants  Restaurants @relation(fields: [restaurantId], references: [restaurantId],onDelete: Cascade)
+
+  // Orders 관계
+  orders Orders[]
+
+  
+  // 검색을 위한 인덱스 생성
+  @@index([menuName], name: "menu_name")
 
   @@map("Menus")
 }

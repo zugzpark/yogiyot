@@ -14,7 +14,7 @@ model Users {
   userType String
   point    Int
   createdAt DateTime @default(now())
-  deletedAt DateTime?  @db.Timestamp()
+  deletedAt DateTime? @db.Timestamp()
 
   // Orders 관계
   orders Orders[]
@@ -43,6 +43,10 @@ model Restaurants {
 
   // Menus 관계
   menus Menus[]
+
+  
+  // 검색을 위한 인덱스 생성
+  @@index([brandName], name: "brand_name")
 
   @@map("Restaurants")
 }
@@ -85,6 +89,10 @@ model Menus {
 
   // Orders 관계
   orders Orders[]
+
+  
+  // 검색을 위한 인덱스 생성
+  @@index([menuName], name: "menu_name")
 
   @@map("Menus")
 }

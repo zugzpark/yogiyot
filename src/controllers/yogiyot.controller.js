@@ -1,88 +1,113 @@
-import { yogiyotService } from '../services/yogiyot.service.js';
+import { yogiyotService } from "../services/yogiyot.service.js";
 
 // const client = new elasticsearch.Client({ hosts: ['http://localhost:9200'] });
 import CustomError from "../utils/error/CustomError.js";
 import menusValidator from "../utils/validation/menusValidator.js";
 import usersValidator from "../utils/validation/usersValidator.js";
 import { imageUploader, uploadWebImage } from "../utils/aws/imageUploader.js";
-import server from 'http'
+import server from "http";
 import { Server } from "socket.io";
 
 const io = new Server(server);
 
-
 export class yogiyotController {
-   service = new yogiyotService();
+  service = new yogiyotService();
 
-   //검색
-   getSuggestions = async (req, res, next) => {
-      try {
-         const results = await this.service.getSuggestions(req.params.input);
-         return res.status(200).json({ data: results });
-      } catch (error) {
-         console.error(error);
-         next(error);
-      }
-   };
+  //검색
+  getSuggestions = async (req, res, next) => {
+    try {
+      const results = await this.service.getSuggestions(req.params.input);
+      return res.status(200).json({ data: results });
+    } catch (error) {
+      console.error(error);
+      next(error);
+    }
+  };
 
-   
-   getRestaurants = async (req, res, next) => {
-      try {
-         const restaurants = await this.service.findAllRestaurantsWithoutDel();
-         return res.status(200).json({ data: restaurants });
-      } catch (error) {
-         next(error);
-      }
-   };
+  getRestaurants = async (req, res, next) => {
+    try {
+      const restaurants = await this.service.findAllRestaurantsWithoutDel();
+      return res.status(200).json({ data: restaurants });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-   //사업장 등록
-   createRestaurant = async (req, res, next) => {
-      try {
-         // const {userId} = req.user
-         const userId = 1; //임시데이터
-         const userType = 'owner'; //임시데이터
-         const { brandName, address, tel, type } = req.body;
-         const restaurant = await this.service.createRestaurant(brandName, address, tel, type, userId, userType);
-         return res.status(200).json({ data: restaurant });
-      } catch (error) {
-         next(error);
-      }
-   };
+  //사업장 등록
+  createRestaurant = async (req, res, next) => {
+    try {
+      if (req.user.userType === "CUSTOMER")
+        throw new CustomError("AccessError", 401, "사장님만 사용할수 있습니다");
+      console.log(`>>>  `,req.user)
+      const { userType } = req.user.userType;
+      const { userId } = req.user.userId;
+      const { brandName, address, tel, type } = req.body;
 
-   //사업장 수정
-   updateRestaurant = async (req, res, next) => {
-      try {
-         // const { userType } = req.user;
-         const userType = 'owner'; //임시데이터
-         const { restaurantId } = req.params;
-         const { brandName, address, tel, type } = req.body;
-         const restaurant = await this.service.updateRestaurant(brandName, address, tel, type, userType, restaurantId);
-         return res.status(200).json({ data: restaurant });
-      } catch (error) {
-         next(error);
-      }
-   };
+      const restaurant = await this.service.createRestaurant(
+        brandName,
+        address,
+        tel,
+        type,
+        userId,
+        userType
+      );
+      return res.status(200).json({ data: restaurant });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-   //사업장 삭제
-   deleteRestaurant = async (req, res, next) => {
-      try {
-         // const { userType } = req.user;
-         const userType = 'owner'; //임시데이터
-         const { restaurantId } = req.params;
-         const deletedRestaurant = await this.service.deleteRestaurant(restaurantId, userType);
-         return res.status(200).json({ data: deletedRestaurant });
-      } catch (error) {
-         next(error);
-      }
-   };
+  //사업장 수정
+  updateRestaurant = async (req, res, next) => {
+    try {
+      if (req.user.userType === "CUSTOMER")
+        throw new CustomError("AccessError", 401, "사장님만 사용할수 있습니다");
 
-   /** 음식점 목록 controller
-   * 
+      const { userType } = req.user.userType;
+
+      const { restaurantId } = req.params;
+      const { brandName, address, tel, type } = req.body;
+      const restaurant = await this.service.updateRestaurant(
+        brandName,
+        address,
+        tel,
+        type,
+        userType,
+        restaurantId
+      );
+      return res.status(200).json({ data: restaurant });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  //사업장 삭제
+  deleteRestaurant = async (req, res, next) => {
+    try {
+
+      if (req.user.userType === "CUSTOMER")
+        throw new CustomError("AccessError", 401, "사장님만 사용할수 있습니다");
+
+      const { userType } = req.user.userType;
+
+      const { restaurantId } = req.params;
+      const deletedRestaurant = await this.service.deleteRestaurant(
+        restaurantId,
+        userType
+      );
+      return res.status(200).json({ data: deletedRestaurant });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /** 음식점 목록 controller
+   *
    */
   getRestaurants = async (req, res, next) => {
     try {
       const restaurants = await this.service.findAllRestaurants();
-  
+
       return res.status(200).json({ data: restaurants });
     } catch (error) {
       next(error);
@@ -90,12 +115,12 @@ export class yogiyotController {
   };
 
   /** 회원가입 controller
-   * 
+   *
    */
   signUp = async (req, res, next) => {
     try {
-      
       const validation = usersValidator(req.body);
+      
       if (validation.error)
         throw new CustomError(
           "ValidationError",
@@ -114,14 +139,12 @@ export class yogiyotController {
   };
 
   /** 로그인 controller
-   * 
+   *
    */
   login = async (req, res, next) => {
     try {
-      
-
       const validation = usersValidator(req.body);
-      
+
       if (validation.error)
         throw new CustomError(
           "ValidationError",
@@ -132,7 +155,7 @@ export class yogiyotController {
       const { id, password } = validation.value;
 
       const login = await this.service.login(id, password);
-      
+
       if (login) {
         res.cookie(process.env.JWT_AUTH, `Bearer ${login.token}`, {
           expires: login.expires,
@@ -145,10 +168,12 @@ export class yogiyotController {
   };
 
   /** 메뉴 생성 controller
-   * 
+   *
    */
   createMenu = async (req, res, next) => {
     try {
+      if (req.user.userType === "CUSTOMER")
+      throw new CustomError("AccessError", 401, "사장님만 사용할수 있습니다");
       const { restaurantId } = req.params;
 
       //파일 이름 image로 지정
@@ -179,19 +204,17 @@ export class yogiyotController {
   };
 
   /** 주문 생성 controller
-   * 
+   *
    */
   createOrder = async (req, res, next) => {
     try {
-      
+
       if (req.user.userType === "OWNER")
         throw new CustomError("AccessError", 401, "고객님만 사용할수 있습니다");
 
       //주문시 쿠키에 있는 point 로 메뉴의 price 비교
-      
 
       const { restaurantId, menuId } = req.params;
-      
 
       //음식점 있는지 여부
       await this.service.findRestaurant(restaurantId);
@@ -199,14 +222,15 @@ export class yogiyotController {
       //음식점에 메뉴가 있는지 여부
       const menu = await this.service.findRestaurantMenu(restaurantId, menuId);
 
+      console.log(`메뉴 > `, menu);
+      console.log(`user > `, req.user);
       const userPoint = req.user.point;
       const foodPrice = menu[0].price;
       const userId = req.user.userId;
       const customerId = req.user.id;
 
-
-      //가격 포인트 비교 트랜잭션 처리 필요
-      //if(userPoint-foodPrice>=0)
+      if (userPoint < foodPrice)
+        throw new CustomError("PointError", 401, "포인트가 부족합니다");
 
       //주문 생성
       await this.service.createOrder(
@@ -214,10 +238,11 @@ export class yogiyotController {
         customerId,
         restaurantId,
         menuId,
-        foodPrice
+        foodPrice,
+        userPoint
       );
 
-      
+      //알림처리
       const ownerId = await this.service.findUserIdByRestaurant(restaurantId);
 
       return res.status(200).json({ message: "주문 완료" });
@@ -225,4 +250,29 @@ export class yogiyotController {
       next(error);
     }
   };
+
+
+  /** 주문 조회 controller
+   * 
+   */
+  getOrders = async (req,res,next) => {
+    try {
+
+      const {userId,userType} = req.user
+      
+      console.log(`>> `,userId, userType, userType=='OWNER')
+      let orders;
+
+      if(userType=='OWNER'){
+        orders = await this.service.getOrdersByOwer(userId,userType)
+      } else {
+        orders = await this.service.getOrders(userId)
+      }
+      
+
+      return res.status(200).json({orders})
+    } catch (error) {
+      next(error)
+    }
+  }
 }

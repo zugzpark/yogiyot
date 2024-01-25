@@ -2,6 +2,7 @@ import express from 'express';
 import router from './routes/yogiyot.router.js';
 import { yogiyotRepository } from './repositories/yogiyot.repository.js';
 import ErrorHandler from "./middlewares/errorHandlerMiddleware.js";
+import logMiddleware from './middlewares/logMiddleware.js';
 import cookieParser from 'cookie-parser'
 import path from 'path'
 
@@ -17,7 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static('public'))
-
+app.use(logMiddleware)
 app.use("/yogiyot", router)
 app.get("/", (req, res) => {
   

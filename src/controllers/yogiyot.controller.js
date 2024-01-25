@@ -115,8 +115,10 @@ export class yogiyotController {
          return res.status(200).json({ message: '로그인이 완료되었습니다' });
       } catch (error) {
          next(error);
-      }
+        }
    };
+
+      
 
    /** 메뉴 생성 controller
     *

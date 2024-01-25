@@ -407,6 +407,11 @@ export class yogiyotRepository {
    where userId=${userId}`;
   };
 
+  /** CUSTOMER 주문조회 repository
+   * 
+   * @param {*} userId 
+   * @returns 
+   */
   getOrders = async (userId) => {
     result = await prisma.$queryRaw`
    select 
@@ -428,6 +433,11 @@ export class yogiyotRepository {
     return result;
   };
 
+  /** OWNER 주문조회 repository
+   * 
+   * @param {*} userId 
+   * @returns 
+   */
   getOrdersByOwner = async (userId) => {
     result = await prisma.$queryRaw`
       

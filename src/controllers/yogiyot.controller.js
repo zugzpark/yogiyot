@@ -124,6 +124,7 @@ export class yogiyotController {
    createMenu = async (req, res, next) => {
       try {
          if (req.user.userType !== 'OWNER') throw new OwnerError('AccessError', 401, '사장님만 사용할 수 있습니다');
+         console.log(req.user.userType);
          const { restaurantId } = req.params;
 
          //파일 이름 image로 지정

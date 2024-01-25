@@ -24,7 +24,7 @@ router.delete('/restaurants/:restaurantId', authMiddleware, controller.deleteRes
 
 router.post('/login', controller.login);
 router.post('/signUp', controller.signUp);
-router.post('/restaurants/:restaurantId/menus', upload.single('image'), controller.createMenu);
+router.post('/restaurants/:restaurantId/menus', authMiddleware, upload.single('image'), controller.createMenu);
 router.post('/restaurants/:restaurantId/menus/:menuId/orders', authMiddleware, controller.createOrder);
 //이메일인증
 router.post('/emailcheck', controller.emailAuthentication);

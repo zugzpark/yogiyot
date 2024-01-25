@@ -98,6 +98,7 @@ export class yogiyotRepository {
    //elasticsearch내의 해당 인덱스의 document 중복체크
    checkExistence = async (brandName, menuName) => {
       try {
+         // console.log('checkExistence called with', brandName, menuName);
          // const { body } = await elasticClient.search({
          //    index: indexName,
          //    body: {
@@ -115,13 +116,13 @@ export class yogiyotRepository {
             body: {
                query: {
                   bool: {
-                     must: [{ match_phrase: { brandName: brandName } }, { match_phrase: { menuName: menuName } }],
+                     must: [{ match: { brandName: brandName } }, { match: { menuName: menuName } }],
                   },
                },
             },
          });
 
-         console.log('Search result:', result);
+         // console.log('Search result:', result);
 
          //데이터를 조회 하지 못 했을 때
          if (!result.body || !result.body.hits || !result.body.hits.total) {

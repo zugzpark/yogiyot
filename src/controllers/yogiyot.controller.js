@@ -8,6 +8,7 @@ import usersValidator from '../utils/validation/usersValidator.js';
 import { imageUploader, uploadWebImage } from '../utils/aws/imageUploader.js';
 import server from 'http';
 import { Server } from 'socket.io';
+import OwnerError from '../utils/error/OwnerError.js';
 
 const io = new Server(server);
 
@@ -37,12 +38,11 @@ export class yogiyotController {
    //사업장 등록
    createRestaurant = async (req, res, next) => {
       try {
-         // const {userId} = req.user
-         const userId = 1; //임시데이터
-         const userType = 'owner'; //임시데이터
+         if (req.user.userType !== 'OWNER') throw new OwnerError('AccessError', 401, '사장님만 사용할 수 있습니다');
+         const { userId } = req.user;
          const { brandName, address, tel, type } = req.body;
          const restaurant = await this.service.createRestaurant(brandName, address, tel, type, userId, userType);
-         return res.status(200).json({ data: restaurant });
+         return res.status(200).json({ message: '사업장등록 완료' });
       } catch (error) {
          next(error);
       }
@@ -51,12 +51,12 @@ export class yogiyotController {
    //사업장 수정
    updateRestaurant = async (req, res, next) => {
       try {
-         // const { userType } = req.user;
-         const userType = 'owner'; //임시데이터
+         if (req.user.userType !== 'OWNER') throw new OwnerError('AccessError', 401, '사장님만 사용할 수 있습니다');
+
          const { restaurantId } = req.params;
          const { brandName, address, tel, type } = req.body;
-         const restaurant = await this.service.updateRestaurant(brandName, address, tel, type, userType, restaurantId);
-         return res.status(200).json({ data: restaurant });
+         const restaurant = await this.service.updateRestaurant(brandName, address, tel, type, restaurantId);
+         return res.status(200).json({ message: '사업장수정 완료' });
       } catch (error) {
          next(error);
       }
@@ -65,57 +65,11 @@ export class yogiyotController {
    //사업장 삭제
    deleteRestaurant = async (req, res, next) => {
       try {
-         // const { userType } = req.user;
-         const userType = 'owner'; //임시데이터
+         if (req.user.userType !== 'OWNER') throw new OwnerError('AccessError', 401, '사장님만 사용할 수 있습니다');
+
          const { restaurantId } = req.params;
-         const deletedRestaurant = await this.service.deleteRestaurant(restaurantId, userType);
-         return res.status(200).json({ data: deletedRestaurant });
-      } catch (error) {
-         next(error);
-      }
-   };
-
-   emailAuthentication = async (req, res, next) => {
-      try {
-         const randomNumber = Math.floor(Math.random() * (999999 - 111111 + 1)) + 111111;
-         const { email } = req.body;
-
-         console.log('emailemailemailemail', email);
-
-         const mailOptions = {
-            from: `jenna <${process.env.EMAIL}>`, // AWS SES에서 검증된 발신자 이메일 주소.
-            to: email,
-            subject: '인증 관련 메일입니다.',
-            html: '<h1>인증번호를 입력해주세요</h1>' + randomNumber,
-         };
-
-         sesMailer.sendMail(mailOptions, (error, responses) => {
-            if (error) {
-               console.error(error);
-               res.status(500).json({
-                  message: `Failed to send authentication email to ${email}`,
-               });
-            } else {
-               res.status(200).json({
-                  randomNumber,
-                  message: `Authentication mail is sent to ${email}`,
-               });
-            }
-            sesMailer.close();
-         });
-      } catch (error) {
-         next(error);
-      }
-   };
-
-   /** 음식점 목록 controller
-    *
-    */
-   getRestaurants = async (req, res, next) => {
-      try {
-         const restaurants = await this.service.findAllRestaurants();
-
-         return res.status(200).json({ data: restaurants });
+         const deletedRestaurant = await this.service.deleteRestaurant(restaurantId);
+         return res.status(200).json({ message: '사업장삭제 완료' });
       } catch (error) {
          next(error);
       }
@@ -168,6 +122,8 @@ export class yogiyotController {
     */
    createMenu = async (req, res, next) => {
       try {
+         if (req.user.userType !== 'OWNER') throw new OwnerError('AccessError', 401, '사장님만 사용할 수 있습니다');
+         console.log(req.user.userType);
          const { restaurantId } = req.params;
 
          //파일 이름 image로 지정
@@ -223,6 +179,40 @@ export class yogiyotController {
          const ownerId = await this.service.findUserIdByRestaurant(restaurantId);
 
          return res.status(200).json({ message: '주문 완료' });
+      } catch (error) {
+         next(error);
+      }
+   };
+
+   //이메일인증
+   emailAuthentication = async (req, res, next) => {
+      try {
+         const randomNumber = Math.floor(Math.random() * (999999 - 111111 + 1)) + 111111;
+         const { email } = req.body;
+
+         console.log('emailemailemailemail', email);
+
+         const mailOptions = {
+            from: `jenna <${process.env.EMAIL}>`, // AWS SES에서 검증된 발신자 이메일 주소.
+            to: email,
+            subject: '인증 관련 메일입니다.',
+            html: '<h1>인증번호를 입력해주세요</h1>' + randomNumber,
+         };
+
+         sesMailer.sendMail(mailOptions, (error, responses) => {
+            if (error) {
+               console.error(error);
+               res.status(500).json({
+                  message: `Failed to send authentication email to ${email}`,
+               });
+            } else {
+               res.status(200).json({
+                  randomNumber,
+                  message: `Authentication mail is sent to ${email}`,
+               });
+            }
+            sesMailer.close();
+         });
       } catch (error) {
          next(error);
       }

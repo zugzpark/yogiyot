@@ -5,8 +5,8 @@ import { resolve } from 'path';
 
 //elasticsearch
 const elasticClient = new elasticsearch.Client({
-   host: 'localhost:9200',
-   log: 'info',
+  host: "localhost:9200",
+  log: "info",
 });
 
 // elastic server 파악
@@ -19,81 +19,81 @@ const elasticClient = new elasticsearch.Client({
 // });
 
 //elasticsearch 내에 생성할 인덱스 이름
-const indexName = 'brand_menu';
+const indexName = "brand_menu";
 
 let result;
 
 export class yogiyotRepository {
-   //인덱스 삭제
-   deleteIndex = async () => {
-      return elasticClient.indices.delete({
-         index: indexName,
-      });
-   };
+  //인덱스 삭제
+  deleteIndex = async () => {
+    return elasticClient.indices.delete({
+      index: indexName,
+    });
+  };
 
-   //인덱스 생성
-   initIndex = async () => {
-      return elasticClient.indices.create({
-         index: indexName,
-      });
-   };
+  //인덱스 생성
+  initIndex = async () => {
+    return elasticClient.indices.create({
+      index: indexName,
+    });
+  };
 
-   //인덱스 존재여부
-   indexExists = async () => {
-      return elasticClient.indices.exists({
-         index: indexName,
-      });
-   };
+  //인덱스 존재여부
+  indexExists = async () => {
+    return elasticClient.indices.exists({
+      index: indexName,
+    });
+  };
 
-   //인덱스 맵핑
-   initMapping = async () => {
-      return elasticClient.indices.putMapping({
-         index: indexName,
-         body: {
-            properties: {
-               brandName: { type: 'text' },
-               menuName: { type: 'text' },
-               suggest: {
-                  type: 'completion',
-                  analyzer: 'simple',
-                  search_analyzer: 'simple',
-               },
+  //인덱스 맵핑
+  initMapping = async () => {
+    return elasticClient.indices.putMapping({
+      index: indexName,
+      body: {
+        properties: {
+          brandName: { type: "text" },
+          menuName: { type: "text" },
+          suggest: {
+            type: "completion",
+            analyzer: "simple",
+            search_analyzer: "simple",
+          },
+        },
+      },
+    });
+  };
+
+  //검색조건 및 형태?
+  getSuggestions = async (input) => {
+    return elasticClient.search({
+      index: indexName,
+      body: {
+        suggest: {
+          docsuggest: {
+            prefix: input,
+            completion: {
+              field: "suggest",
+              fuzzy: {
+                fuzziness: "auto",
+              },
             },
-         },
-      });
-   };
+          },
+        },
+      },
+    });
+  };
 
-   //검색조건 및 형태?
-   getSuggestions = async (input) => {
-      return elasticClient.search({
-         index: indexName,
-         body: {
-            suggest: {
-               docsuggest: {
-                  prefix: input,
-                  completion: {
-                     field: 'suggest',
-                     fuzzy: {
-                        fuzziness: 'auto',
-                     },
-                  },
-               },
-            },
-         },
-      });
-   };
+  // elasticsearch 초기 설정
+  init = async () => {
+    const exists = await this.indexExists();
+    if (exists) {
+      await this.deleteIndex();
+    }
 
-   // elasticsearch 초기 설정
-   init = async () => {
-      const exists = await this.indexExists();
-      if (exists) {
-         await this.deleteIndex();
-      }
-
-      await this.initIndex();
-      await this.initMapping();
-      await this.addDocument();
-   };
+    await this.initIndex();
+    await this.initMapping();
+    await this.addDocument();
+  };
 
    //elasticsearch내의 해당 인덱스의 document 중복체크
    checkExistence = async (brandName, menuName) => {
@@ -124,25 +124,27 @@ export class yogiyotRepository {
 
          // console.log('Search result:', result);
 
-         //데이터를 조회 하지 못 했을 때
-         if (!result.body || !result.body.hits || !result.body.hits.total) {
-            console.log(`No search results for brandName: ${brandName}, menuName: ${menuName}`);
-            return false;
-         }
-
-         return result.body.hits.total.value > 0; // 일치하는 문서가 하나 이상 존재하는지 확인
-      } catch (error) {
-         //error가 났을 때 query값이 잘 들어오는지 확인
-         console.error(
-            `Error occurred in Elasticsearch query for brandName: ${brandName}, menuName: ${menuName}`,
-            error
-         );
+      //데이터를 조회 하지 못 했을 때
+      if (!result.body || !result.body.hits || !result.body.hits.total) {
+        console.log(
+          `No search results for brandName: ${brandName}, menuName: ${menuName}`
+        );
+        return false;
       }
-   };
 
-   //인덱스에 문서 추가
-   addDocument = async () => {
-      const restaurants = await this.findAllRestaurantsWithMenus();
+      return result.body.hits.total.value > 0; // 일치하는 문서가 하나 이상 존재하는지 확인
+    } catch (error) {
+      //error가 났을 때 query값이 잘 들어오는지 확인
+      console.error(
+        `Error occurred in Elasticsearch query for brandName: ${brandName}, menuName: ${menuName}`,
+        error
+      );
+    }
+  };
+
+  //인덱스에 문서 추가
+  addDocument = async () => {
+    const restaurants = await this.findAllRestaurantsWithMenus();
 
       return Promise.all(
          restaurants.map((restaurant) => {
@@ -152,43 +154,46 @@ export class yogiyotRepository {
                   let response;
                   const exists = await this.checkExistence(restaurant.brandName, menu.menuName);
 
-                  //존재하지 않다면
-                  if (!exists) {
-                     try {
-                        response = await elasticClient.index({
-                           index: indexName,
-                           body: {
-                              brandName: restaurant.brandName,
-                              menuName: menu.menuName,
-                              suggest: {
-                                 input: [restaurant.brandName, ...menu.menuName.split(' ')],
-                              },
-                           },
-                        });
-                        console.log(
-                           `Document added successfully for brandName: ${restaurant.brandName}, menuName: ${menu.menuName}`
-                        );
-                        // 문서 추가 후 1초 대기
-                        await new Promise((resolve) => setTimeout(resolve, 1000));
-                     } catch (error) {
-                        console.error(
-                           `Error occurred while adding document for brandName: ${restaurant.brandName}, menuName: ${menu.menuName}`,
-                           error
-                        );
-                     }
-                  }
-                  return response;
-               })
-            );
-         })
-      );
-   };
+            //존재하지 않다면
+            if (!exists) {
+              try {
+                response = await elasticClient.index({
+                  index: indexName,
+                  body: {
+                    brandName: restaurant.brandName,
+                    menuName: menu.menuName,
+                    suggest: {
+                      input: [
+                        restaurant.brandName,
+                        ...menu.menuName.split(" "),
+                      ],
+                    },
+                  },
+                });
+                console.log(
+                  `Document added successfully for brandName: ${restaurant.brandName}, menuName: ${menu.menuName}`
+                );
+                // 문서 추가 후 1초 대기
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+              } catch (error) {
+                console.error(
+                  `Error occurred while adding document for brandName: ${restaurant.brandName}, menuName: ${menu.menuName}`,
+                  error
+                );
+              }
+            }
+            return response;
+          })
+        );
+      })
+    );
+  };
 
-   //모든 메뉴 찾기(검색할 때 필요)
-   findAllMenus = async () => {
-      const menus = await prisma.menus.findMany();
-      return menus;
-   };
+  //모든 메뉴 찾기(검색할 때 필요)
+  findAllMenus = async () => {
+    const menus = await prisma.menus.findMany();
+    return menus;
+  };
 
    //해당음식점의 메뉴까지 가져오기
    findAllRestaurantsWithMenus = async () => {
@@ -246,49 +251,52 @@ export class yogiyotRepository {
       return restaurants;
    };
 
-   //사업장 수정
-   updateRestaurant = async (brandName, address, tel, type, restaurantId) => {
-      const restaurant = await prisma.restaurants.update({
-         where: {
-            restaurantId: +restaurantId,
-         },
-         data: {
-            brandName,
-            address,
-            tel,
-            type,
-         },
-      });
-      return restaurant;
-   };
+  //사업장 수정
+  updateRestaurant = async (brandName, address, tel, type, restaurantId) => {
+    const restaurant = await prisma.restaurants.update({
+      where: {
+        restaurantId: +restaurantId,
+      },
+      data: {
+        brandName,
+        address,
+        tel,
+        type,
+      },
+    });
+    return restaurant;
+  };
 
-   //사업장 softDelete
-   softDeleteRestaurant = async (restaurantId) => {
-      await prisma.restaurants.update({ where: { restaurantId: +restaurantId }, data: { deletedAt: new Date() } });
-   };
+  //사업장 softDelete
+  softDeleteRestaurant = async (restaurantId) => {
+    await prisma.restaurants.update({
+      where: { restaurantId: +restaurantId },
+      data: { deletedAt: new Date() },
+    });
+  };
 
-   /** 회원가입 repository
-    *
-    * @param {*} id
-    * @param {*} password
-    * @param {*} userType
-    * @param {*} point
-    */
-   createUser = async (id, password, userType, point) => {
-      result = await prisma.$queryRaw`
+  /** 회원가입 repository
+   *
+   * @param {*} id
+   * @param {*} password
+   * @param {*} userType
+   * @param {*} point
+   */
+  createUser = async (id, password, userType, point) => {
+    result = await prisma.$queryRaw`
     insert into Users
     (id,password,userType,point)
     values
     (${id},${password},${userType},${point})`;
    };
 
-   /** id로 회원조회 repository
-    *
-    * @param {*} id
-    * @return {object}
-    */
-   findUser = async (id) => {
-      result = await prisma.$queryRaw`
+  /** id로 회원조회 repository
+   *
+   * @param {*} id
+   * @return {object}
+   */
+  findUser = async (id) => {
+    result = await prisma.$queryRaw`
     select userId,id,password,userType,point
     from Users
     where id = ${id}`;
@@ -296,12 +304,12 @@ export class yogiyotRepository {
       return result;
    };
 
-   /** 모든 음식점 조회 repository
-    *
-    * @return {object}
-    */
-   findAllRestaurants = async () => {
-      result = await prisma.$queryRaw`
+  /** 모든 음식점 조회 repository
+   *
+   * @return {object}
+   */
+  findAllRestaurants = async () => {
+    result = await prisma.$queryRaw`
     select restaurantId as id,
     brandName as name,
     type
@@ -311,43 +319,43 @@ export class yogiyotRepository {
       return result;
    };
 
-   /** restaurantId로 음식점 조회 repository
-    *
-    * @param {*} restaurantId
-    * @return {boolean}
-    */
-   findRestaurant = async (restaurantId) => {
-      result = await prisma.$queryRaw`
+  /** restaurantId로 음식점 조회 repository
+   *
+   * @param {*} restaurantId
+   * @return {boolean}
+   */
+  findRestaurant = async (restaurantId) => {
+    result = await prisma.$queryRaw`
     select restaurantId
     from Restaurants
     where restaurantId = ${restaurantId}`;
 
-      return result.length == 0 ? false : result;
-   };
+    return result.length == 0 ? false : result;
+  };
 
-   /** 메뉴 생성 repository
-    *
-    * @param {*} restaurantId
-    * @param {*} menuName
-    * @param {*} image
-    * @param {*} price
-    * @param {*} type
-    */
-   createMenu = async (restaurantId, menuName, image, price, type) => {
-      await prisma.$queryRaw`
+  /** 메뉴 생성 repository
+   *
+   * @param {*} restaurantId
+   * @param {*} menuName
+   * @param {*} image
+   * @param {*} price
+   * @param {*} type
+   */
+  createMenu = async (restaurantId, menuName, image, price, type) => {
+    await prisma.$queryRaw`
     insert into Menus
     (menuName,image,price,type,restaurantId)
     values 
     (${menuName},${image},${price},${type},${restaurantId})`;
-   };
+  };
 
-   /** name으로 메뉴 조회 repository
-    *
-    * @param {*} menuName
-    * @return {boolean}
-    */
-   findMenuByName = async (menuName) => {
-      result = await prisma.$queryRaw`
+  /** name으로 메뉴 조회 repository
+   *
+   * @param {*} menuName
+   * @return {boolean}
+   */
+  findMenuByName = async (menuName) => {
+    result = await prisma.$queryRaw`
     select menuName
     from Menus
     where menuName=${menuName}`;
@@ -355,14 +363,14 @@ export class yogiyotRepository {
       return result.length == 0 ? false : result;
    };
 
-   /** menuId로 메뉴 조회 repository
-    *
-    * @param {*} restaurantId
-    * @param {*} menuId
-    * @return {object}
-    */
-   findMenuById = async (restaurantId, menuId) => {
-      result = await prisma.$queryRaw`
+  /** menuId로 메뉴 조회 repository
+   *
+   * @param {*} restaurantId
+   * @param {*} menuId
+   * @return {object}
+   */
+  findMenuById = async (restaurantId, menuId) => {
+    result = await prisma.$queryRaw`
     select menuId,
     menuName,price
     from Menus
@@ -373,29 +381,89 @@ export class yogiyotRepository {
       return result.length == 0 ? false : result;
    };
 
-   /** 주문생성 repository
-    *
-    * @param {*} userId
-    * @param {*} customerId
-    * @param {*} restaurantId
-    * @param {*} menuId
-    * @param {*} foodPrice
-    */
-   createOrder = async (userId, customerId, restaurantId, menuId, foodPrice) => {
-      await prisma.$queryRaw`
+  /** 주문생성 repository
+   *
+   * @param {*} userId
+   * @param {*} customerId
+   * @param {*} restaurantId
+   * @param {*} menuId
+   * @param {*} foodPrice
+   */
+  createOrder = async (userId, customerId, restaurantId, menuId, foodPrice) => {
+    await prisma.$queryRaw`
     insert into Orders
     (UserId,customerId,restaurantId,menuId,totalPrice,status)
     values 
     (${userId},${customerId},${restaurantId},${menuId},${foodPrice},"ORDER")`;
    };
 
-   findUserIdByRestaurant = async (restaurantId) => {
-      result = await prisma.$queryRaw`
+  findUserIdByRestaurant = async (restaurantId) => {
+    result = await prisma.$queryRaw`
     select UserId
     from Restaurants
     where restaurantId = ${restaurantId}
     and deletedAt IS NULL`;
 
-      return result.length == 0 ? false : result;
-   };
+    return result.length == 0 ? false : result;
+  };
+
+  updateUser = async (userId, userPoint, foodPrice) => {
+    await prisma.$queryRaw`
+   update Users
+   set point=${userPoint}-${foodPrice}
+   where userId=${userId}`;
+  };
+
+  /** CUSTOMER 주문조회 repository
+   * 
+   * @param {*} userId 
+   * @returns 
+   */
+  getOrders = async (userId) => {
+    result = await prisma.$queryRaw`
+   select 
+
+   a.UserId,a.restaurantId,
+   b.brandName,
+   c.MenuName,c.price,
+   b.type,
+   status,
+   totalPrice
+   
+   from Orders a join
+   Restaurants b on
+   a.restaurantId = b.restaurantId
+   join Menus c on
+   b.restaurantId = c.restaurantId
+   where a.UserId = ${userId}`;
+
+    return result;
+  };
+
+  /** OWNER 주문조회 repository
+   * 
+   * @param {*} userId 
+   * @returns 
+   */
+  getOrdersByOwner = async (userId) => {
+    result = await prisma.$queryRaw`
+      
+   select 
+   
+   a.orderId,
+   a.customerId,
+   b.brandName,
+   c.MenuName,c.price,
+   status,
+   totalPrice
+   
+   from Orders a join
+   Restaurants b on
+   a.restaurantId = b.restaurantId
+   join Menus c on
+   b.restaurantId = c.restaurantId
+   where b.UserId = ${userId}`;
+
+    return result;
+  };
 }

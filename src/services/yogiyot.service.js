@@ -60,13 +60,21 @@ export class yogiyotService {
       if (!restaurant || restaurant.deletedAt !== null)
          throw new OwnerError('NotExist', 401, '존재하지 않는 사업장 입니다.');
 
-      await this.repository.updateRestaurant(brandName, address, tel, type, restaurantId);
+    await this.repository.updateRestaurant(
+      brandName,
+      address,
+      tel,
+      type,
+      restaurantId
+    );
 
-      //변경된 데이터 response
-      const updatedRestaurant = await this.repository.findByRestaurantId(restaurantId);
+    //변경된 데이터 response
+    const updatedRestaurant = await this.repository.findByRestaurantId(
+      restaurantId
+    );
 
-      return updatedRestaurant;
-   };
+    return updatedRestaurant;
+  };
 
    // 사업장삭제
    deleteRestaurant = async (restaurantId) => {
@@ -89,27 +97,29 @@ export class yogiyotService {
       return restaurants;
    };
 
-   /** 회원가입 service
-    *
-    * @param {*} id
-    * @param {*} password
-    * @param {*} userType
-    */
-   createUser = async (id, password, userType) => {
-      let point;
-      userType === 'CUSTOMER' ? (point = 1000000) : (point = 0);
-      password = await bcrypt.hash(password, 10);
-      await this.repository.createUser(id, password, userType, point);
-   };
+  /** 회원가입 service
+   *
+   * @param {*} id
+   * @param {*} password
+   * @param {*} userType
+   */
+  createUser = async (id, password, userType) => {
+    let point;
+    userType === "CUSTOMER" ? (point = 1000000) : (point = 0);
+    password = await bcrypt.hash(password, 10);
+    
+    await this.repository.createUser(id, password, userType, point)
+    
+  };
 
-   /** 로그인 service
-    *
-    * @param {*} id
-    * @param {*} password
-    * @return {object}
-    */
-   login = async (id, password) => {
-      //아이디 비밀번호 조회
+  /** 로그인 service
+   *
+   * @param {*} id
+   * @param {*} password
+   * @return {object}
+   */
+  login = async (id, password) => {
+    //아이디 비밀번호 조회
 
       const user = await this.repository.findUser(id, password);
 
@@ -133,73 +143,122 @@ export class yogiyotService {
          process.env.JWT_SECRET_KEY
       );
 
-      return { token, expires };
-   };
+    return { token, expires };
+  };
 
-   /** 메뉴등록 service
-    *
-    * @param {*} restaurantId
-    * @param {*} menuName
-    * @param {*} image
-    * @param {*} price
-    * @param {*} type
-    */
-   createMenu = async (restaurantId, menuName, image, price, type) => {
-      //음식점 검증
-      const restaurant = this.repository.findRestaurant(restaurantId);
+  /** 메뉴등록 service
+   *
+   * @param {*} restaurantId
+   * @param {*} menuName
+   * @param {*} image
+   * @param {*} price
+   * @param {*} type
+   */
+  createMenu = async (restaurantId, menuName, image, price, type) => {
+    //음식점 검증
+    const restaurant = await this.repository.findRestaurant(restaurantId);
+    
+    
+    //메뉴이름 검증
+    const findMenuName = await this.repository.findMenuByName(menuName);
+    
+    //에러 리턴
+    if (!restaurant)
+      throw new CustomError("BadRequest", 404, "존재하지 않는 업장 입니다");
+    if (findMenuName)
+      throw new CustomError("ExistError", 409, "중복된 메뉴 이름입니다.");
 
-      //메뉴이름 검증
-      const findMenuName = this.repository.findMenuByName(menuName);
+    //메뉴 생성
+    
+    await this.repository.createMenu(restaurantId, menuName, image, price, type)
+    
+  };
 
-      //에러 리턴
-      if (!restaurant) throw new CustomError('BadRequest', 404, '존재하지 않는 업장 입니다');
-      if (findMenuName) throw new CustomError('ExistError', 409, '중복된 메뉴 이름입니다.');
-
-      //메뉴 생성
-      await this.repository.createMenu(restaurantId, menuName, image, price, type);
-   };
-
-   /** menuId로 메뉴조회 service
-    *
-    * @param {*} restaurantId
-    * @param {*} menuId
-    * @return {object}
-    */
-   findRestaurantMenu = async (restaurantId, menuId) => {
-      const menu = await this.repository.findMenuById(restaurantId, menuId);
+  /** menuId로 메뉴조회 service
+   *
+   * @param {*} restaurantId
+   * @param {*} menuId
+   * @return {object}
+   */
+  findRestaurantMenu = async (restaurantId, menuId) => {
+    const menu = await this.repository.findMenuById(restaurantId, menuId);
 
       if (!menu) throw new CustomError('BadRequest', 404, '존재하지 않는 메뉴 입니다');
 
       return menu;
    };
 
-   //주문 등록
-   createOrder = async (userId, customerId, restaurantId, menuId, foodPrice) => {
-      await this.repository.createOrder(userId, customerId, restaurantId, menuId, foodPrice);
-   };
+  /** 주문등록
+   *
+   * @param {*} userId
+   * @param {*} customerId
+   * @param {*} restaurantId
+   * @param {*} menuId
+   * @param {*} foodPrice
+   */
+  createOrder = async (userId, customerId, restaurantId, menuId, foodPrice,userPoint) => {
+    
+    await this.repository.updateUser(
+      userId,
+      userPoint,
+      foodPrice
+    ),
+    
+    await this.repository.createOrder(
+      userId,
+      customerId,
+      restaurantId,
+      menuId,
+      foodPrice
+    );
 
-   /** restaurantId로 음식점 조회 service
-    *
-    * @param {Number} restaurantId
-    * @return {object}
-    */
-   findRestaurant = async (restaurantId) => {
-      const restaurant = await this.repository.findRestaurant(restaurantId);
+  };
+
+  /** restaurantId로 음식점 조회 service
+   *
+   * @param {Number} restaurantId
+   * @return {object}
+   */
+  findRestaurant = async (restaurantId) => {
+    const restaurant = this.repository.findRestaurant(restaurantId);
 
       if (!restaurant) throw new CustomError('BadRequest', 404, '존재하지 않는 업장 입니다');
 
       return restaurant;
    };
 
-   /** restaurantId로 UserId 찾기
-    *
-    * @param {*} restaurantId
-    * @returns
-    */
-   findUserIdByRestaurant = async (restaurantId) => {
-      const userId = await this.repository.findUserIdByRestaurant(restaurantId);
-      if (!userId) throw new CustomError('BadRequest', 404, '존재하지 않는 업장 입니다');
+  /** restaurantId로 UserId 찾기
+   *
+   * @param {*} restaurantId
+   * @returns
+   */
+  findUserIdByRestaurant = async (restaurantId) => {
+    const userId = await this.repository.findUserIdByRestaurant(restaurantId);
+    if (!userId)
+      throw new CustomError("BadRequest", 404, "존재하지 않는 업장 입니다");
 
-      return userId;
-   };
+    return userId;
+  };
+
+  /** userId로 주문 조회 CUSTOMER
+   * 
+   * @param {*} userId 
+   * @returns 
+   */
+  getOrders = async (userId) => {
+    const orders = await this.repository.getOrders(userId)
+
+    return orders
+  }
+
+  /** userId로 주문 조회 OWNER
+   * 
+   * @param {*} userId 
+   * @returns 
+   */
+  getOrdersByOwer = async(userId) => {
+    const orders = await this.repository.getOrdersByOwner(userId)
+
+    return orders
+  }
 }

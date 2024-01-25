@@ -2,11 +2,11 @@ import jwt from 'jsonwebtoken';
 import CustomError from '../utils/error/CustomError.js';
 
 export default async function (req, res, next) {
-   try {
-      console.log(`토큰 확인`);
-      const cookies = req.cookies[process.env.JWT_AUTH];
-      console.log(1);
-      if (!cookies) throw new CustomError('AccessError', 401, '로그인이 필요한 서비스입니다');
+  try {
+  
+    const cookies = req.cookies[process.env.JWT_AUTH];
+  
+    if (!cookies) throw new CustomError("AccessError",401,'로그인이 필요한 서비스입니다')
 
       //토큰 확인
       const [tokenType, tokenValue] = cookies.split(' ');
